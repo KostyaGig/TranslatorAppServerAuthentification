@@ -1,3 +1,4 @@
+import json
 import string
 import random
 
@@ -150,10 +151,10 @@ def generate_unique_key():
 def add_user():
     db.create_all()
     db.session.commit()
-    user = Employee(user_unique_key="123", user_name="Kostya", number_phone="123")
+    user = Employee(user_unique_key="1234", user_name="Egor", number_phone="1234")
     db.session.add(user)
     db.session.commit()
-    added_user = Employee.query.filter_by(number_phone='123').one()
+    added_user = Employee.query.filter_by(number_phone='1234').one()
     return 'Read added user here name ' + added_user.user_name
 
 @app.route('/addWordUser')
@@ -174,6 +175,7 @@ def read_user_words():
 USER_UNIQUE_KEY = 'userUniqueKey'
 # translate word if use was logged
 @app.route('/translateUniqueKey/<string:src_word>', methods=['POST'])
+# todo rename
 def translateWithUniqueUserKey(src_word):
     try:
         user_unique_key = request.args.get(USER_UNIQUE_KEY)
@@ -214,6 +216,42 @@ def insert_word(word):
     db.session.add(word)
     db.session.commit()
 
+@app.route('/users')
+def users():
+    users = Employee.query.all()
+    users_name = list()
+    for user in users:
+        users_name.append(user.user_name)
+    return jsonify(names=users_name) # {"names":["Kostya","Egor"]}
+
+class UserWord:
+    def __init__(self, src, translated):
+        self.src = src
+        self.translated = translated
+
+    def serialize(self):
+        return {
+            'src': self.src,
+            'translated': self.translated
+        }
+
+
+@app.route('/users/<string:user_name>/words')
+def words_user(user_name):
+    user = Employee.query.filter_by(user_name=user_name).one()
+    words = user.words
+    user_words = []
+    for word in words:
+        user_word = UserWord(word.src,word.translated)
+        user_words.append(user_word.serialize())
+    return jsonify(user_words=user_words) #{"user_words":[{"src":"\u041b\u0430\u043c\u043e\u0434\u0430","translated":"Lamoda"},{"src":"\u041b\u0430\u043c\u043e\u0434\u0430","translated":"Lamoda"},{"src":"\u041b\u0430\u043c\u043e\u0434\u0430","translated":"Lamoda"}]}
+
+@app.route('/addByName')
+def add_words_by_user_name():
+    user = Employee.query.filter_by(user_name='Kostya').one()
+    word = Word(src='Ламода',translated='Lamoda',owner=user)
+    insert_word(word)
+    return ""
 #endregion
 
 if __name__ == "__main__":
