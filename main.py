@@ -9,12 +9,62 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///employee.db'
 db = SQLAlchemy(app)
 
+# region translate logic
+SUCCESS_MARK = "Success"
+FAILURE_MARK = "Failure"
 
+RU_LANGUAGE = "ru"
+EN_LANGUAGE = "en"
+
+@app.route('/translate/<string:src_word>')
+def translate(src_word):
+    try:
+        if isEmpty(src_word):
+            return responseAsJson("Field not will be empty", FAILURE_MARK, "", "", "", "")
+        else:
+            translator_word = GoogleTranslator(source='auto', target='en').translate(src_word)
+            return responseAsJson("", SUCCESS_MARK, RU_LANGUAGE, EN_LANGUAGE, src_word, translator_word)
+    except Exception as e:
+        if isEmpty(src_word):
+            return responseAsJson("Field not will be empty", FAILURE_MARK, "", "", "", "")
+        else:
+            errorMessage = e.message
+            return responseByErrorMessage(errorMessage)
+
+
+def isEmpty(src):
+    if src == "\"\"":
+        return True
+    else:
+        return False
+
+
+def responseAsJson(message, mark, fromLanguage, toLanguage, srcWord, translatorWord):
+    return jsonify({
+        "message": message,
+        "mark": mark,
+        "fromLanguage": fromLanguage,
+        "toLanguage": toLanguage,
+        "srcWord": srcWord,
+        "translatorWord": translatorWord
+    })
+
+
+def responseByErrorMessage(message):
+    if message == "text must be a valid text with maximum 5000 character, otherwise it cannot be translated":
+        return responseAsJson("Not correctly entered word", FAILURE_MARK, "", "", "", "")
+    else:
+        return responseAsJson("Cannot be translated", FAILURE_MARK, "", "", "", "")
+# endregion
+
+# region db model
 class Employee(db.Model):
+
     id = db.Column(db.Integer(), primary_key=True)
     user_unique_key = db.Column(db.String(100), unique=True)
     user_name = db.Column(db.String(20), unique=False)
     number_phone = db.Column(db.String(20), unique=True)
+    words = db.relationship('Word', backref='owner', lazy=True)
 
     def __init__(self, user_unique_key, user_name, number_phone):
         self.user_name = user_name
@@ -24,11 +74,17 @@ class Employee(db.Model):
     def __repr__(self):
         return '<User %r>' % self.username
 
+class Word(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('employee.id'))
+    src = db.Column(db.String(100), unique=False)
+    translated = db.Column(db.String(100), unique=False)
+# endregion
 
+# region auth
 @app.route('/')
 def index():
     return "default page"
-
 
 @app.route('/login/<string:unique_key>')
 def login_by_unique_key(unique_key):
@@ -86,55 +142,79 @@ def register():
 
 def generate_unique_key():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+# endregion
+
+# region user communication
+
+@app.route('/addUser')
+def add_user():
+    db.create_all()
+    db.session.commit()
+    user = Employee(user_unique_key="123", user_name="Kostya", number_phone="123")
+    db.session.add(user)
+    db.session.commit()
+    added_user = Employee.query.filter_by(number_phone='123').one()
+    return 'Read added user here name ' + added_user.user_name
+
+@app.route('/addWordUser')
+def add_word_user():
+    added_user = Employee.query.filter_by(number_phone='123').one()
+    word = Word(src='Мышь', translated='Mouse', owner=added_user)
+    db.session.add(word)
+    db.session.commit()
+    return "ok"
+
+@app.route('/userWords')
+def read_user_words():
+    added_user = Employee.query.filter_by(number_phone='123').one()
+    print(added_user.words)
+    return str(added_user.words[-1].translated)
 
 
-SUCCESS_MARK = "Success"
-FAILURE_MARK = "Failure"
-
-RU_LANGUAGE = "ru"
-EN_LANGUAGE = "en"
-
-
-@app.route('/translate/<string:src_word>')
-def translate(src_word):
+USER_UNIQUE_KEY = 'userUniqueKey'
+# translate word if use was logged
+@app.route('/translateUniqueKey/<string:src_word>', methods=['POST'])
+def translateWithUniqueUserKey(src_word):
     try:
-        if isEmpty(src_word):
-            return responseAsJson("Field not will be empty", FAILURE_MARK, "", "", "", "")
+        user_unique_key = request.args.get(USER_UNIQUE_KEY)
+        if db.session.query(Employee).filter_by(user_unique_key=user_unique_key).count() < 1:
+            # translate without added word in db
+            # reuse method for translate word
+            return translate(src_word)
         else:
-            translator_word = GoogleTranslator(source='auto', target='en').translate(src_word)
-            return responseAsJson("", SUCCESS_MARK, RU_LANGUAGE, EN_LANGUAGE, src_word, translator_word)
+            user = Employee.query.filter_by(user_unique_key=user_unique_key).one()
+            translated_word = GoogleTranslator(source='auto', target='en').translate(src_word)
+
+            user_words = user.words
+            if len(user_words) <= 0:
+                # add word to db
+                word = Word(src=src_word,translated=translated_word,owner=user)
+                insert_word(word)
+                return "Word " + src_word + " was success inserted in this user"
+            else:
+                user_src_words = list()
+                for user_word in user_words:
+                    print(user_word.src)
+                    # add only src word
+                    user_src_words.append(user_word.src)
+
+                # check on unique word
+                if src_word in user_src_words:
+                    return "Word " + src_word + " already exist in this user"
+                else:
+                    # add word to db
+                    word = Word(src=src_word, translated=translated_word, owner=user)
+                    insert_word(word)
+                    return "Word " + src_word + " while not exist in this user"
+
     except Exception as e:
-        if isEmpty(src_word):
-            return responseAsJson("Field not will be empty", FAILURE_MARK, "", "", "", "")
-        else:
-            errorMessage = e.message
-            return responseByErrorMessage(errorMessage)
+        return "TranslateWithUniqueUserKey: " + str(e)
 
+def insert_word(word):
+    db.session.add(word)
+    db.session.commit()
 
-def isEmpty(src):
-    if src == "\"\"":
-        return True
-    else:
-        return False
-
-
-def responseAsJson(message, mark, fromLanguage, toLanguage, srcWord, translatorWord):
-    return jsonify({
-        "message": message,
-        "mark": mark,
-        "fromLanguage": fromLanguage,
-        "toLanguage": toLanguage,
-        "srcWord": srcWord,
-        "translatorWord": translatorWord
-    })
-
-
-def responseByErrorMessage(message):
-    if message == "text must be a valid text with maximum 5000 character, otherwise it cannot be translated":
-        return responseAsJson("Not correctly entered word", FAILURE_MARK, "", "", "", "")
-    else:
-        return responseAsJson("Cannot be translated", FAILURE_MARK, "", "", "", "")
-
+#endregion
 
 if __name__ == "__main__":
     app.run()
