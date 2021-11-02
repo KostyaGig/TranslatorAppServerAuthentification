@@ -24,51 +24,57 @@ class Employee(db.Model):
     def __repr__(self):
         return '<User %r>' % self.username
 
+
 @app.route('/')
 def index():
     return "default page"
 
-@app.route('/login/<string:user_unique_key>')
-def login_by_unique_key(user_unique_key):
+
+@app.route('/login/<string:unique_key>')
+def login_by_unique_key(unique_key):
     try:
         db.create_all()
         db.session.commit()
-        if db.session.query(Employee).filter_by(user_unique_key=user_unique_key).count() > 1:
+        if Employee.query.filter_by(user_unique_key=unique_key).count() >= 1:
             return "Success login to account!"
         else:
             return "You not registered in system yet!"
     except Exception as e:
-        return "Login user happened error: " + e.message
+        return "Login user happened error: " + str(e)
 
 
-USER_NAME_KEY = 'user_name'
-NUMBER_PHONE_KEY = 'user_number_phone'
+USER_NAME_KEY = 'userName'
+NUMBER_PHONE_KEY = 'userNumberPhone'
 
 @app.route('/login', methods=['POST'])
 def login_by_number_phone_and_password():
     try:
-        user_name = request.form[USER_NAME_KEY]
-        user_number_phone = request.form[NUMBER_PHONE_KEY]
+        db.create_all()
+        db.session.commit()
+        user_name = request.args.get(USER_NAME_KEY)
+        user_number_phone = request.args.get(NUMBER_PHONE_KEY)
         if db.session.query(Employee).filter_by(number_phone=user_number_phone).count() < 1:
             return "User with number " + user_number_phone + " not found!"
         else:
-            if db.session.query(Employee).filter_by(user_name=user_name).count() < 1:
-                return "Incorrect number or name user"
+            user = Employee.query.filter_by(number_phone=user_number_phone).one()
+            if user.user_name != user_name or user.number_phone != user_number_phone:
+                return "Incorrect number or name user unique key " + user.user_unique_key
             else:
-                users = db.session.query(Employee)
-                user = users.filter(number_phone=user_number_phone).one()
                 return "Success login by number and phone, your unique key " + user.user_unique_key
     except Exception as e:
-        return "Login user by number and phone happened error " + e.message
+        return "Login by number and phone happened error " + str(e)
+
 
 @app.route('/register', methods=['POST'])
 def register():
     try:
-        user_name = request.form[USER_NAME_KEY]
-        user_number_phone = request.form[NUMBER_PHONE_KEY]
+        db.create_all()
+        db.session.commit()
+        user_name = request.args.get(USER_NAME_KEY)
+        user_number_phone = request.args.get(NUMBER_PHONE_KEY)
         if db.session.query(Employee).filter_by(number_phone=user_number_phone).count() < 1:
-            unique_user_id = generate_unique_key()
-            user = Employee(user_unique_key=unique_user_id, user_name=user_name, number_phone=user_number_phone)
+            unique_key = generate_unique_key()
+            user = Employee(user_unique_key=unique_key, user_name=user_name, number_phone=user_number_phone)
             db.session.add(user)
             db.session.commit()
             return "Success register user in system!"
@@ -76,17 +82,18 @@ def register():
             return "User with number phone" + user_number_phone + ' already exist!'
     except Exception as e:
         db.session.rollback()
-        return "Register user happened error " + e.message
-
+        return "Register user happened error " + str(e)
 
 def generate_unique_key():
-    ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+
 
 SUCCESS_MARK = "Success"
 FAILURE_MARK = "Failure"
 
 RU_LANGUAGE = "ru"
 EN_LANGUAGE = "en"
+
 
 @app.route('/translate/<string:src_word>')
 def translate(src_word):
