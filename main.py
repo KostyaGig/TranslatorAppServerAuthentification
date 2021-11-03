@@ -246,12 +246,40 @@ def words_user(user_name):
         user_words.append(user_word.serialize())
     return jsonify(user_words=user_words) #{"user_words":[{"src":"\u041b\u0430\u043c\u043e\u0434\u0430","translated":"Lamoda"},{"src":"\u041b\u0430\u043c\u043e\u0434\u0430","translated":"Lamoda"},{"src":"\u041b\u0430\u043c\u043e\u0434\u0430","translated":"Lamoda"}]}
 
-@app.route('/addByName')
+# for test
+@app.route('/addUserForTest')
+def addUserForTest():
+    try:
+        db.create_all()
+        db.session.commit()
+        user = Employee(user_unique_key="123", user_name="Kostya", number_phone="123")
+        db.session.add(user)
+        db.session.commit()
+        return "Success add user for test"
+    except Exception as e:
+        return "Add user for test error: " + str(e)
+
+# for test
+@app.route('/addWordByName')
 def add_words_by_user_name():
-    user = Employee.query.filter_by(user_name='Kostya').one()
-    word = Word(src='Ламода',translated='Lamoda',owner=user)
-    insert_word(word)
-    return ""
+    try:
+        user = Employee.query.filter_by(user_name='Kostya').one()
+        word = Word(src='Ламода', translated='Lamoda', owner=user)
+        insert_word(word)
+        return ""
+    except Exception as e:
+        return "Add word by name error: " + str(e)
+
+
+@app.route('/delete')
+def clear_db():
+    try:
+        Employee.query.delete()
+        db.session.commit()
+        return "Db was cleared"
+    except Exception as e:
+        return "Delete db error " + str(e)
+
 #endregion
 
 if __name__ == "__main__":
