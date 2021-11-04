@@ -114,22 +114,29 @@ def register():
         db.session.commit()
         user_name = request.args.get(USER_NAME_KEY)
         user_number_phone = request.args.get(NUMBER_PHONE_KEY)
-        if db.session.query(Employee).filter_by(number_phone=user_number_phone).count() < 1:
-            unique_key = generate_unique_key()
-            user = Employee(user_unique_key=unique_key, user_name=user_name, number_phone=user_number_phone)
-            db.session.add(user)
-            db.session.commit()
+        if isEmpty(user_name) or isEmpty(user_number_phone):
             return jsonify({
-                "message": "Success register user in system",
-                "mark": REGISTER_SUCCESS_MARK,
-                "uniqueKey": unique_key
-            })
-        else:
-            return jsonify({
-                "message": "User with number phone" + user_number_phone + " already exist!",
-                "mark": REGISTER_EXIST_MARK,
+                "message": "Field not will be empty",
+                "mark": REGISTER_FAILURE_MARK,
                 "uniqueKey": ""
             })
+        else:
+            if db.session.query(Employee).filter_by(number_phone=user_number_phone).count() < 1:
+                unique_key = generate_unique_key()
+                user = Employee(user_unique_key=unique_key, user_name=user_name, number_phone=user_number_phone)
+                db.session.add(user)
+                db.session.commit()
+                return jsonify({
+                    "message": "Success register user in system",
+                    "mark": REGISTER_SUCCESS_MARK,
+                    "uniqueKey": unique_key
+                })
+            else:
+                return jsonify({
+                    "message": "User with number phone" + user_number_phone + " already exist!",
+                    "mark": REGISTER_EXIST_MARK,
+                    "uniqueKey": ""
+                })
     except Exception as e:
         db.session.rollback()
         return jsonify({
@@ -149,26 +156,33 @@ def login_by_number_phone_and_password():
         db.session.commit()
         user_name = request.args.get(USER_NAME_KEY)
         user_number_phone = request.args.get(NUMBER_PHONE_KEY)
-        if db.session.query(Employee).filter_by(number_phone=user_number_phone).count() < 1:
+        if isEmpty(user_name) or isEmpty(user_number_phone):
             return jsonify({
-                "message": "User with number " + user_number_phone + " not found!",
+                "message": "Field not will be empty",
                 "mark": LOGIN_FAILURE_MARK,
                 "uniqueKey": ""
             })
         else:
-            user = Employee.query.filter_by(number_phone=user_number_phone).one()
-            if user.user_name != user_name or user.number_phone != user_number_phone:
+            if db.session.query(Employee).filter_by(number_phone=user_number_phone).count() < 1:
                 return jsonify({
-                    "message": "Incorrect name user for number " + user.number_phone,
+                    "message": "User with number " + user_number_phone + " not found!",
                     "mark": LOGIN_FAILURE_MARK,
                     "uniqueKey": ""
                 })
             else:
-                return jsonify({
-                    "message": "Success login in system!",
-                    "mark": LOGIN_SUCCESS_MARK,
-                    "uniqueKey": user.user_unique_key
-                })
+                user = Employee.query.filter_by(number_phone=user_number_phone).one()
+                if user.user_name != user_name or user.number_phone != user_number_phone:
+                    return jsonify({
+                        "message": "Incorrect name user for number " + user.number_phone,
+                        "mark": LOGIN_FAILURE_MARK,
+                        "uniqueKey": ""
+                    })
+                else:
+                    return jsonify({
+                        "message": "Success login in system!",
+                        "mark": LOGIN_SUCCESS_MARK,
+                        "uniqueKey": user.user_unique_key
+                    })
     except Exception as e:
         return jsonify({
             "message": "Login by number and phone happened error " + str(e),
