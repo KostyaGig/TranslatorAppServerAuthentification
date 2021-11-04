@@ -11,8 +11,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///employee.db'
 db = SQLAlchemy(app)
 
 # region translate logic
-SUCCESS_MARK = "Success"
-FAILURE_MARK = "Failure"
+TRANSLATED_SUCCESS_MARK = "Success"
+TRANSLATED_FAILURE_MARK = "Failure"
 
 RU_LANGUAGE = "ru"
 EN_LANGUAGE = "en"
@@ -21,13 +21,13 @@ EN_LANGUAGE = "en"
 def translate(src_word):
     try:
         if isEmpty(src_word):
-            return responseAsJson("Field not will be empty", FAILURE_MARK, "", "", "", "")
+            return responseAsJson("Field not will be empty", TRANSLATED_FAILURE_MARK, "", "", "", "")
         else:
             translator_word = GoogleTranslator(source='auto', target='en').translate(src_word)
-            return responseAsJson("", SUCCESS_MARK, RU_LANGUAGE, EN_LANGUAGE, src_word, translator_word)
+            return responseAsJson("", TRANSLATED_SUCCESS_MARK, RU_LANGUAGE, EN_LANGUAGE, src_word, translator_word)
     except Exception as e:
         if isEmpty(src_word):
-            return responseAsJson("Field not will be empty", FAILURE_MARK, "", "", "", "")
+            return responseAsJson("Field not will be empty", TRANSLATED_FAILURE_MARK, "", "", "", "")
         else:
             errorMessage = e.message
             return responseByErrorMessage(errorMessage)
@@ -53,9 +53,9 @@ def responseAsJson(message, mark, fromLanguage, toLanguage, srcWord, translatorW
 
 def responseByErrorMessage(message):
     if message == "text must be a valid text with maximum 5000 character, otherwise it cannot be translated":
-        return responseAsJson("Not correctly entered word", FAILURE_MARK, "", "", "", "")
+        return responseAsJson("Not correctly entered word", TRANSLATED_FAILURE_MARK, "", "", "", "")
     else:
-        return responseAsJson("Cannot be translated", FAILURE_MARK, "", "", "", "")
+        return responseAsJson("Cannot be translated", TRANSLATED_FAILURE_MARK, "", "", "", "")
 # endregion
 
 # region db model
@@ -103,24 +103,9 @@ def login_by_unique_key(unique_key):
 USER_NAME_KEY = 'userName'
 NUMBER_PHONE_KEY = 'userNumberPhone'
 
-@app.route('/login', methods=['POST'])
-def login_by_number_phone_and_password():
-    try:
-        db.create_all()
-        db.session.commit()
-        user_name = request.args.get(USER_NAME_KEY)
-        user_number_phone = request.args.get(NUMBER_PHONE_KEY)
-        if db.session.query(Employee).filter_by(number_phone=user_number_phone).count() < 1:
-            return "User with number " + user_number_phone + " not found!"
-        else:
-            user = Employee.query.filter_by(number_phone=user_number_phone).one()
-            if user.user_name != user_name or user.number_phone != user_number_phone:
-                return "Incorrect number or name user unique key " + user.user_unique_key
-            else:
-                return "Success login by number and phone, your unique key " + user.user_unique_key
-    except Exception as e:
-        return "Login by number and phone happened error " + str(e)
-
+REGISTER_SUCCESS_MARK = "Success"
+REGISTER_FAILURE_MARK = "Failure"
+REGISTER_EXIST_MARK = "Exist"
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -134,12 +119,62 @@ def register():
             user = Employee(user_unique_key=unique_key, user_name=user_name, number_phone=user_number_phone)
             db.session.add(user)
             db.session.commit()
-            return "Success register user in system!"
+            return jsonify({
+                "message": "Success register user in system",
+                "mark": REGISTER_SUCCESS_MARK,
+                "uniqueKey": unique_key
+            })
         else:
-            return "User with number phone" + user_number_phone + ' already exist!'
+            return jsonify({
+                "message": "User with number phone" + user_number_phone + " already exist!",
+                "mark": REGISTER_EXIST_MARK,
+                "uniqueKey": ""
+            })
     except Exception as e:
         db.session.rollback()
-        return "Register user happened error " + str(e)
+        return jsonify({
+            "message": "Register user happened error " + str(e),
+            "mark": REGISTER_FAILURE_MARK,
+            "uniqueKey": ""
+        })
+
+
+LOGIN_SUCCESS_MARK = "Success"
+LOGIN_FAILURE_MARK = "Failure"
+
+@app.route('/login', methods=['POST'])
+def login_by_number_phone_and_password():
+    try:
+        db.create_all()
+        db.session.commit()
+        user_name = request.args.get(USER_NAME_KEY)
+        user_number_phone = request.args.get(NUMBER_PHONE_KEY)
+        if db.session.query(Employee).filter_by(number_phone=user_number_phone).count() < 1:
+            return jsonify({
+                "message": "User with number " + user_number_phone + " not found!",
+                "mark": LOGIN_FAILURE_MARK,
+                "uniqueKey": ""
+            })
+        else:
+            user = Employee.query.filter_by(number_phone=user_number_phone).one()
+            if user.user_name != user_name or user.number_phone != user_number_phone:
+                return jsonify({
+                    "message": "Incorrect name user for number " + user.number_phone,
+                    "mark": LOGIN_FAILURE_MARK,
+                    "uniqueKey": ""
+                })
+            else:
+                return jsonify({
+                    "message": "Success login in system!",
+                    "mark": LOGIN_SUCCESS_MARK,
+                    "uniqueKey": user.user_unique_key
+                })
+    except Exception as e:
+        return jsonify({
+            "message": "Login by number and phone happened error " + str(e),
+            "mark": LOGIN_FAILURE_MARK,
+            "uniqueKey": ""
+        })
 
 def generate_unique_key():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
@@ -148,10 +183,9 @@ def generate_unique_key():
 # region user communication
 
 USER_UNIQUE_KEY = 'userUniqueKey'
-# translate word if user was logged
+# translate word if user was authorize in system
 @app.route('/translateUniqueKey/<string:src_word>', methods=['POST'])
-# todo rename
-def translateWithUniqueUserKey(src_word):
+def translateWithAuthorizeInSystem(src_word):
     try:
         user_unique_key = request.args.get(USER_UNIQUE_KEY)
         if db.session.query(Employee).filter_by(user_unique_key=user_unique_key).count() < 1:
