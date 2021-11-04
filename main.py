@@ -147,33 +147,8 @@ def generate_unique_key():
 
 # region user communication
 
-@app.route('/addUser')
-def add_user():
-    db.create_all()
-    db.session.commit()
-    user = Employee(user_unique_key="1234", user_name="Egor", number_phone="1234")
-    db.session.add(user)
-    db.session.commit()
-    added_user = Employee.query.filter_by(number_phone='1234').one()
-    return 'Read added user here name ' + added_user.user_name
-
-@app.route('/addWordUser')
-def add_word_user():
-    added_user = Employee.query.filter_by(number_phone='123').one()
-    word = Word(src='Мышь', translated='Mouse', owner=added_user)
-    db.session.add(word)
-    db.session.commit()
-    return "ok"
-
-@app.route('/userWords')
-def read_user_words():
-    added_user = Employee.query.filter_by(number_phone='123').one()
-    print(added_user.words)
-    return str(added_user.words[-1].translated)
-
-
 USER_UNIQUE_KEY = 'userUniqueKey'
-# translate word if use was logged
+# translate word if user was logged
 @app.route('/translateUniqueKey/<string:src_word>', methods=['POST'])
 # todo rename
 def translateWithUniqueUserKey(src_word):
@@ -216,14 +191,6 @@ def insert_word(word):
     db.session.add(word)
     db.session.commit()
 
-@app.route('/users')
-def users():
-    users = Employee.query.all()
-    users_name = list()
-    for user in users:
-        users_name.append(user.user_name)
-    return jsonify(names=users_name) # {"names":["Kostya","Egor"]}
-
 class UserWord:
     def __init__(self, src, translated):
         self.src = src
@@ -234,8 +201,16 @@ class UserWord:
             'src': self.src,
             'translated': self.translated
         }
+# all users
+@app.route('/users')
+def users():
+    users = Employee.query.all()
+    users_name = list()
+    for user in users:
+        users_name.append(user.user_name)
+    return jsonify(names=users_name) # {"names":["Kostya","Egor"]}
 
-
+# all words user
 @app.route('/users/<string:user_name>/words')
 def words_user(user_name):
     user = Employee.query.filter_by(user_name=user_name).one()
@@ -246,7 +221,7 @@ def words_user(user_name):
         user_words.append(user_word.serialize())
     return jsonify(user_words=user_words) #{"user_words":[{"src":"\u041b\u0430\u043c\u043e\u0434\u0430","translated":"Lamoda"},{"src":"\u041b\u0430\u043c\u043e\u0434\u0430","translated":"Lamoda"},{"src":"\u041b\u0430\u043c\u043e\u0434\u0430","translated":"Lamoda"}]}
 
-# for test
+# for test Add test user
 @app.route('/addUserForTest')
 def addUserForTest():
     try:
@@ -259,7 +234,7 @@ def addUserForTest():
     except Exception as e:
         return "Add user for test error: " + str(e)
 
-# for test
+# for test Add word by name user
 @app.route('/addWordByName')
 def add_words_by_user_name():
     try:
@@ -270,7 +245,7 @@ def add_words_by_user_name():
     except Exception as e:
         return "Add word by name error: " + str(e)
 
-
+# for test
 @app.route('/delete')
 def clear_db():
     try:
@@ -279,6 +254,33 @@ def clear_db():
         return "Db was cleared"
     except Exception as e:
         return "Delete db error " + str(e)
+
+    # for test
+    @app.route('/addUser')
+    def add_user():
+        db.create_all()
+        db.session.commit()
+        user = Employee(user_unique_key="1234", user_name="Egor", number_phone="1234")
+        db.session.add(user)
+        db.session.commit()
+        added_user = Employee.query.filter_by(number_phone='1234').one()
+        return 'Read added user here name ' + added_user.user_name
+
+    # for test
+    @app.route('/addWordUser')
+    def add_word_user():
+        added_user = Employee.query.filter_by(number_phone='123').one()
+        word = Word(src='Мышь', translated='Mouse', owner=added_user)
+        db.session.add(word)
+        db.session.commit()
+        return "ok"
+
+    # for test
+    @app.route('/userWords')
+    def read_user_words():
+        added_user = Employee.query.filter_by(number_phone='123').one()
+        print(added_user.words)
+        return str(added_user.words[-1].translated)
 
 #endregion
 
