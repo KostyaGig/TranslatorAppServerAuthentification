@@ -104,7 +104,7 @@ REGISTER_FAILURE_MARK = "Failure"
 REGISTER_EXIST_MARK = "Exist"
 
 '/translate/<string:src_word>'
-@app.route('/register/<string:name>/<string:phone>', methods=['POST'])
+@app.route('/register/<string:name>/<string:phone>')
 def register(name,phone):
     try:
         db.create_all()
@@ -146,7 +146,7 @@ def register(name,phone):
 LOGIN_SUCCESS_MARK = "Success"
 LOGIN_FAILURE_MARK = "Failure"
 
-@app.route('/login/<string:name>/<string:phone>', methods=['POST'])
+@app.route('/login/<string:name>/<string:phone>')
 def login_by_number_phone_and_password(name,phone):
     try:
         db.create_all()
@@ -194,7 +194,7 @@ def generate_unique_key():
 # region user communication
 
 # translate word if user was authorize in system
-@app.route('/translateUniqueKey/<string:src_word>/<string:user_unique_key>', methods=['POST'])
+@app.route('/translateUniqueKey/<string:src_word>/<string:user_unique_key>')
 def translateWithAuthorizeInSystem(src_word,user_unique_key):
     try:
         if db.session.query(Employee).filter_by(user_unique_key=user_unique_key).count() < 1:
