@@ -1,4 +1,3 @@
-import json
 import string
 import random
 
@@ -40,22 +39,23 @@ def isEmpty(src):
         return False
 
 
-def responseAsJson(message, mark, fromLanguage, toLanguage, srcWord, translatorWord):
+def responseAsJson(message, mark, fromLanguage, toLanguage, srcWord, translatorWord,userIsAuthorized):
     return jsonify({
         "message": message,
         "mark": mark,
         "fromLanguage": fromLanguage,
         "toLanguage": toLanguage,
         "srcWord": srcWord,
-        "translatorWord": translatorWord
+        "translatorWord": translatorWord,
+        "userIsAuthorized": userIsAuthorized
     })
 
 
 def responseByErrorMessage(message):
     if message == "text must be a valid text with maximum 5000 character, otherwise it cannot be translated":
-        return responseAsJson("Not correctly entered word", TRANSLATED_FAILURE_MARK, "", "", "", "")
+        return responseAsJson("Not correctly entered word", TRANSLATED_FAILURE_MARK, "", "", "", "",False)
     else:
-        return responseAsJson("Cannot be translated", TRANSLATED_FAILURE_MARK, "", "", "", "")
+        return responseAsJson("Cannot be translated", TRANSLATED_FAILURE_MARK, "", "", "", "",False)
 # endregion
 
 # region db model
@@ -99,31 +99,28 @@ def login_by_unique_key(unique_key):
     except Exception as e:
         return "Login user happened error: " + str(e)
 
-
-USER_NAME_KEY = 'userName'
-NUMBER_PHONE_KEY = 'userNumberPhone'
-
 REGISTER_SUCCESS_MARK = "Success"
 REGISTER_FAILURE_MARK = "Failure"
 REGISTER_EXIST_MARK = "Exist"
 
-@app.route('/register', methods=['POST'])
-def register():
+'/translate/<string:src_word>'
+@app.route('/register/<string:name>/<string:phone>', methods=['POST'])
+def register(name,phone):
     try:
         db.create_all()
         db.session.commit()
-        user_name = request.args.get(USER_NAME_KEY)
-        user_number_phone = request.args.get(NUMBER_PHONE_KEY)
-        if isEmpty(user_name) or isEmpty(user_number_phone):
+        # user_name = request.args.get(USER_NAME_KEY)
+        # user_number_phone = request.args.get(NUMBER_PHONE_KEY)
+        if isEmpty(name) or isEmpty(phone):
             return jsonify({
-                "message": "Field not will be empty",
+                "message": "Fields not will be empty",
                 "mark": REGISTER_FAILURE_MARK,
                 "uniqueKey": ""
             })
         else:
-            if db.session.query(Employee).filter_by(number_phone=user_number_phone).count() < 1:
+            if db.session.query(Employee).filter_by(number_phone=phone).count() < 1:
                 unique_key = generate_unique_key()
-                user = Employee(user_unique_key=unique_key, user_name=user_name, number_phone=user_number_phone)
+                user = Employee(user_unique_key=unique_key, user_name=name, number_phone=phone)
                 db.session.add(user)
                 db.session.commit()
                 return jsonify({
@@ -133,7 +130,7 @@ def register():
                 })
             else:
                 return jsonify({
-                    "message": "User with number phone" + user_number_phone + " already exist!",
+                    "message": "User with number phone " + phone + " already exist!",
                     "mark": REGISTER_EXIST_MARK,
                     "uniqueKey": ""
                 })
@@ -149,29 +146,29 @@ def register():
 LOGIN_SUCCESS_MARK = "Success"
 LOGIN_FAILURE_MARK = "Failure"
 
-@app.route('/login', methods=['POST'])
-def login_by_number_phone_and_password():
+@app.route('/login/<string:name>/<string:phone>', methods=['POST'])
+def login_by_number_phone_and_password(name,phone):
     try:
         db.create_all()
         db.session.commit()
-        user_name = request.args.get(USER_NAME_KEY)
-        user_number_phone = request.args.get(NUMBER_PHONE_KEY)
-        if isEmpty(user_name) or isEmpty(user_number_phone):
+        # user_name = request.args.get(USER_NAME_KEY)
+        # user_number_phone = request.args.get(NUMBER_PHONE_KEY)
+        if isEmpty(name) or isEmpty(phone):
             return jsonify({
-                "message": "Field not will be empty",
+                "message": "Fields not will be empty",
                 "mark": LOGIN_FAILURE_MARK,
                 "uniqueKey": ""
             })
         else:
-            if db.session.query(Employee).filter_by(number_phone=user_number_phone).count() < 1:
+            if db.session.query(Employee).filter_by(number_phone=phone).count() < 1:
                 return jsonify({
-                    "message": "User with number " + user_number_phone + " not found!",
+                    "message": "User with number " + phone + " not found!",
                     "mark": LOGIN_FAILURE_MARK,
                     "uniqueKey": ""
                 })
             else:
-                user = Employee.query.filter_by(number_phone=user_number_phone).one()
-                if user.user_name != user_name or user.number_phone != user_number_phone:
+                user = Employee.query.filter_by(number_phone=phone).one()
+                if user.user_name != name or user.number_phone != phone:
                     return jsonify({
                         "message": "Incorrect name user for number " + user.number_phone,
                         "mark": LOGIN_FAILURE_MARK,
@@ -196,12 +193,10 @@ def generate_unique_key():
 
 # region user communication
 
-USER_UNIQUE_KEY = 'userUniqueKey'
 # translate word if user was authorize in system
-@app.route('/translateUniqueKey/<string:src_word>', methods=['POST'])
-def translateWithAuthorizeInSystem(src_word):
+@app.route('/translateUniqueKey/<string:src_word>/<string:user_unique_key>', methods=['POST'])
+def translateWithAuthorizeInSystem(src_word,user_unique_key):
     try:
-        user_unique_key = request.args.get(USER_UNIQUE_KEY)
         if db.session.query(Employee).filter_by(user_unique_key=user_unique_key).count() < 1:
             # translate without added word in db
             # reuse method for translate word
@@ -211,11 +206,18 @@ def translateWithAuthorizeInSystem(src_word):
             translated_word = GoogleTranslator(source='auto', target='en').translate(src_word)
 
             user_words = user.words
+            # if current user not have words yet
             if len(user_words) <= 0:
                 # add word to db
                 word = Word(src=src_word,translated=translated_word,owner=user)
                 insert_word(word)
-                return "Word " + src_word + " was success inserted in this user"
+                return responseAsJson(
+                    "Success translated " + src_word + " this word was inserted to db",
+                    TRANSLATED_SUCCESS_MARK,RU_LANGUAGE,
+                    EN_LANGUAGE,src_word,
+                    translated_word,
+                    True
+                )
             else:
                 user_src_words = list()
                 for user_word in user_words:
@@ -225,15 +227,28 @@ def translateWithAuthorizeInSystem(src_word):
 
                 # check on unique word
                 if src_word in user_src_words:
-                    return "Word " + src_word + " already exist in this user"
+                    return responseAsJson(
+                        "Success translated " + src_word + " this word already exist in this user",
+                        TRANSLATED_SUCCESS_MARK, RU_LANGUAGE,
+                        EN_LANGUAGE, src_word,
+                        translated_word,
+                        True
+                    )
                 else:
                     # add word to db
                     word = Word(src=src_word, translated=translated_word, owner=user)
                     insert_word(word)
-                    return "Word " + src_word + " while not exist in this user"
+                    return responseAsJson(
+                    "Success translated " + src_word + " this word was inserted to db",
+                    TRANSLATED_SUCCESS_MARK,RU_LANGUAGE,
+                    EN_LANGUAGE,src_word,
+                    translated_word,
+                    True
+                )
 
     except Exception as e:
-        return "TranslateWithUniqueUserKey: " + str(e)
+        errorMessage = e.message
+        return responseByErrorMessage(errorMessage)
 
 def insert_word(word):
     db.session.add(word)
