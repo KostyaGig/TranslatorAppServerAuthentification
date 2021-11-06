@@ -20,13 +20,13 @@ EN_LANGUAGE = "en"
 def translate(src_word):
     try:
         if isEmpty(src_word):
-            return responseAsJson("Field not will be empty", TRANSLATED_FAILURE_MARK, "", "", "", "")
+            return responseAsJson("Field not will be empty", TRANSLATED_FAILURE_MARK, "", "", "", "",False)
         else:
             translator_word = GoogleTranslator(source='auto', target='en').translate(src_word)
-            return responseAsJson("", TRANSLATED_SUCCESS_MARK, RU_LANGUAGE, EN_LANGUAGE, src_word, translator_word)
+            return responseAsJson("", TRANSLATED_SUCCESS_MARK, RU_LANGUAGE, EN_LANGUAGE, src_word, translator_word,False)
     except Exception as e:
         if isEmpty(src_word):
-            return responseAsJson("Field not will be empty", TRANSLATED_FAILURE_MARK, "", "", "", "")
+            return responseAsJson("Field not will be empty", TRANSLATED_FAILURE_MARK, "", "", "", "",False)
         else:
             errorMessage = e.message
             return responseByErrorMessage(errorMessage)
@@ -197,54 +197,57 @@ def generate_unique_key():
 @app.route('/translateUniqueKey/<string:src_word>/<string:user_unique_key>')
 def translateWithAuthorizeInSystem(src_word,user_unique_key):
     try:
-        if db.session.query(Employee).filter_by(user_unique_key=user_unique_key).count() < 1:
-            # translate without added word in db
-            # reuse method for translate word
-            return translate(src_word)
+        if isEmpty(src_word):
+            return responseAsJson("Field not will be empty", TRANSLATED_FAILURE_MARK, "", "", "", "",False)
         else:
-            user = Employee.query.filter_by(user_unique_key=user_unique_key).one()
-            translated_word = GoogleTranslator(source='auto', target='en').translate(src_word)
-
-            user_words = user.words
-            # if current user not have words yet
-            if len(user_words) <= 0:
-                # add word to db
-                word = Word(src=src_word,translated=translated_word,owner=user)
-                insert_word(word)
-                return responseAsJson(
-                    "Success translated " + src_word + " this word was inserted to db",
-                    TRANSLATED_SUCCESS_MARK,RU_LANGUAGE,
-                    EN_LANGUAGE,src_word,
-                    translated_word,
-                    True
-                )
+            if db.session.query(Employee).filter_by(user_unique_key=user_unique_key).count() < 1:
+                # translate without added word in db
+                # reuse method for translate word
+                return translate(src_word)
             else:
-                user_src_words = list()
-                for user_word in user_words:
-                    print(user_word.src)
-                    # add only src word
-                    user_src_words.append(user_word.src)
+                user = Employee.query.filter_by(user_unique_key=user_unique_key).one()
+                translated_word = GoogleTranslator(source='auto', target='en').translate(src_word)
 
-                # check on unique word
-                if src_word in user_src_words:
+                user_words = user.words
+                # if current user not have words yet
+                if len(user_words) <= 0:
+                    # add word to db
+                    word = Word(src=src_word, translated=translated_word, owner=user)
+                    insert_word(word)
                     return responseAsJson(
-                        "Success translated " + src_word + " this word already exist in this user",
+                        "Success translated " + src_word + " this word was inserted to db",
                         TRANSLATED_SUCCESS_MARK, RU_LANGUAGE,
                         EN_LANGUAGE, src_word,
                         translated_word,
                         True
                     )
                 else:
-                    # add word to db
-                    word = Word(src=src_word, translated=translated_word, owner=user)
-                    insert_word(word)
-                    return responseAsJson(
-                    "Success translated " + src_word + " this word was inserted to db",
-                    TRANSLATED_SUCCESS_MARK,RU_LANGUAGE,
-                    EN_LANGUAGE,src_word,
-                    translated_word,
-                    True
-                )
+                    user_src_words = list()
+                    for user_word in user_words:
+                        print(user_word.src)
+                        # add only src word
+                        user_src_words.append(user_word.src)
+
+                    # check on unique word
+                    if src_word in user_src_words:
+                        return responseAsJson(
+                            "Success translated " + src_word + " this word already exist in this user",
+                            TRANSLATED_SUCCESS_MARK, RU_LANGUAGE,
+                            EN_LANGUAGE, src_word,
+                            translated_word,
+                            True
+                        )
+                    else:
+                        # add word to db
+                        word = Word(src=src_word, translated=translated_word, owner=user)
+                        insert_word(word)
+                        return responseAsJson(
+                            "Success translated " + src_word + " this word was inserted to db",
+                            TRANSLATED_SUCCESS_MARK, RU_LANGUAGE,
+                            EN_LANGUAGE, src_word,
+                            translated_word,
+                            True
+                        )
 
     except Exception as e:
         errorMessage = e.message
