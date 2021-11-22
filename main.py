@@ -119,15 +119,22 @@ def register(name,phone):
             })
         else:
             if db.session.query(Employee).filter_by(number_phone=phone).count() < 1:
-                unique_key = generate_unique_key()
-                user = Employee(user_unique_key=unique_key, user_name=name, number_phone=phone)
-                db.session.add(user)
-                db.session.commit()
-                return jsonify({
-                    "message": "Success register user in system",
-                    "mark": REGISTER_SUCCESS_MARK,
-                    "uniqueKey": unique_key
-                })
+                if db.session.query(Employee).filter_by(user_name=name).count() < 1:
+                    unique_key = generate_unique_key()
+                    user = Employee(user_unique_key=unique_key, user_name=name, number_phone=phone)
+                    db.session.add(user)
+                    db.session.commit()
+                    return jsonify({
+                        "message": "Success register user in system",
+                        "mark": REGISTER_SUCCESS_MARK,
+                        "uniqueKey": unique_key
+                    })
+                else:
+                    return jsonify({
+                        "message": "Name " + name + " already used,please choice another name",
+                        "mark": REGISTER_FAILURE_MARK,
+                        "uniqueKey": ""
+                    })
             else:
                 return jsonify({
                     "message": "User with number phone " + phone + " already exist!",
@@ -192,6 +199,8 @@ def generate_unique_key():
 # endregion
 
 # region user communication
+
+
 
 # translate word if user was authorize in system
 @app.route('/translateUniqueKey/<string:src_word>/<string:user_unique_key>')
@@ -349,6 +358,7 @@ def clear_db():
         return str(added_user.words[-1].translated)
 
 #endregion
+
 
 if __name__ == "__main__":
     app.run()
