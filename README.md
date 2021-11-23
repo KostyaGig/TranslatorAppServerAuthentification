@@ -19,3 +19,5 @@ Two cases login user in system
     If our unique id will be lost (cache was cleared or our unique id will be lost the occurs ) we should use in this way for login in system.
     <br/>When we make request on server for login in system then should put name and phone number (already exist user).
     <br/>If our number and phone same with number and form which persist in remote database then return unique id user for further fast login in system 
+    
+    
