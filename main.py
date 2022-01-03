@@ -1,3 +1,4 @@
+import json
 import string
 import random
 
@@ -201,6 +202,60 @@ def generate_unique_key():
 # region user communication
 
 
+# synchronize cloud user db with local db on device
+"""
+    Documentation for synchronizedCloudWordsWithClientWords()
+    If our user translate words after authorize in system,then all words was saved to local db
+    When our user authorization in system we need take all words contained in local db and save them to cloud db
+    
+    Example
+    User while not authorized
+    Translate words: Дом,Мышь,Батарейка,Зарядка
+    Save word to local storage (room): Дом,Мышь,Батарейка,Зарядка
+    User decided authorize in system
+    Cloud words: empty
+    Local words: Дом,Мышь,Батарейка,Зарядка
+    Translate words: Микрофон,фонарик,ящик
+    Cloud words: Микрофон,фонарик,ящик
+    Local words: Дом,Мышь,Батарейка,Зарядка,Микрофон,фонарик,ящик
+    
+    In order avoid this situation we have to save all local words to cloud words (after authorize in system)
+"""
+@app.route('/syncWords/<string:user_unique_key>',methods=['POST'])
+def syncWords(user_unique_key):
+    try:
+        wordsString = request.form.get("wordsJson")
+        wordsJson = json.loads(wordsString)
+
+        user = Employee.query.filter_by(user_unique_key=user_unique_key).one()
+
+        remote_words = user.words
+        local_words = wordsJson['words']
+
+        remote_words_translated = list()
+        for remote_word in remote_words:
+            remote_words_translated.append(remote_word.translated)
+
+        for local_word in local_words:
+            if local_word['translated'] not in remote_words_translated:
+                print("insert")
+                insert_word(
+                    Word(
+                        src=local_word['src'], translated=local_word['translated'], owner=user
+                    )
+                )
+
+        return jsonify({
+            "message": "Success sync words",
+            "mark": "Success"
+        })
+    except Exception as e:
+        errorMessage = e.message
+        return jsonify({
+            "message": errorMessage,
+            "mark": "Failure"
+        })
+
 
 # translate word if user was authorize in system
 @app.route('/translateUniqueKey/<string:src_word>/<string:user_unique_key>')
@@ -286,6 +341,17 @@ def users():
     return jsonify(names=users_name) # {"names":["Kostya","Egor"]}
 
 # all words user
+
+"""
+@:return {
+"user_words":[
+    {"src":"\u041b\u0430\u043c\u043e\u0434\u0430","translated":"Lamoda"},
+    {"src":"\u041b\u0430\u043c\u043e\u0434\u0430","translated":"Lamoda"},
+    {"src":"\u041b\u0430\u043c\u043e\u0434\u0430","translated":"Lamoda"}
+  ]
+  }
+"""
+
 @app.route('/users/<string:user_name>/words')
 def words_user(user_name):
     user = Employee.query.filter_by(user_name=user_name).one()
@@ -294,7 +360,47 @@ def words_user(user_name):
     for word in words:
         user_word = UserWord(word.src,word.translated)
         user_words.append(user_word.serialize())
-    return jsonify(user_words=user_words) #{"user_words":[{"src":"\u041b\u0430\u043c\u043e\u0434\u0430","translated":"Lamoda"},{"src":"\u041b\u0430\u043c\u043e\u0434\u0430","translated":"Lamoda"},{"src":"\u041b\u0430\u043c\u043e\u0434\u0430","translated":"Lamoda"}]}
+    return jsonify(user_words=user_words)
+
+# delete all words user by unique key
+@app.route('/deleteWords/<string:unique_key>')
+def delete_user_words(unique_key):
+    user = Employee.query.filter_by(user_unique_key=unique_key).one()
+    user.words = []
+    db.session.add(user)
+    db.session.commit()
+    return "all words was deleted"
+
+# delete word by unique key
+@app.route('/deleteWord/<string:unique_key>')
+def delete_user_word(unique_key):
+
+    try:
+        translated_word = request.form.get("translatedWord")
+        print("translated word",translated_word)
+        user = Employee.query.filter_by(user_unique_key=unique_key).one()
+        remote_words = user.words
+
+        remote_translated_words = list()
+        index_removed_word = -100
+        for remote_word in remote_words:
+            remote_translated_words.append(remote_word.translated)
+
+        for index, remote_translated_word in enumerate(remote_translated_words):
+            if remote_translated_word == translated_word:
+                index_removed_word = index
+
+        remote_words.pop(index_removed_word)
+
+        user.words = remote_words
+        db.session.add(user)
+        db.session.commit()
+
+        # if index removed is -100 then words sent from server not found in remote db
+
+        return "Deleted!"
+    except Exception as e:
+        return "Delete user word: " + str(e)
 
 # for test Add test user
 @app.route('/addUserForTest')
@@ -310,10 +416,10 @@ def addUserForTest():
         return "Add user for test error: " + str(e)
 
 # for test Add word by name user
-@app.route('/addWordByName')
-def add_words_by_user_name():
+@app.route('/addWordByName/<string:name>')
+def add_words_by_user_name(name):
     try:
-        user = Employee.query.filter_by(user_name='Kostya').one()
+        user = Employee.query.filter_by(user_name=name).one()
         word = Word(src='Ламода', translated='Lamoda', owner=user)
         insert_word(word)
         return ""
@@ -356,8 +462,8 @@ def clear_db():
         added_user = Employee.query.filter_by(number_phone='123').one()
         print(added_user.words)
         return str(added_user.words[-1].translated)
-
 #endregion
+
 
 
 if __name__ == "__main__":
