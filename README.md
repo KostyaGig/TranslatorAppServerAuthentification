@@ -45,3 +45,6 @@ User can use our app without auth in there.
 <br>1.Delete all translated words by user unique key
 <br>2.Delete certain translated word by user unique key
 
+<h3>5. Fetch all users which is authorized in system</h3>
+<h3>6. Fetch all translated word user by his name</h3>
+
