@@ -338,7 +338,7 @@ def users():
     users_name = list()
     for user in users:
         users_name.append(user.user_name)
-    return jsonify(names=users_name) # {"names":["Kostya","Egor"]}
+    return jsonify(users=users_name) # {"names":["Kostya","Egor"]}
 
 # all words user
 
@@ -360,7 +360,8 @@ def words_user(user_name):
     for word in words:
         user_word = UserWord(word.src,word.translated)
         user_words.append(user_word.serialize())
-    return jsonify(user_words=user_words)
+
+    return jsonify(user_name=user_name,user_words=user_words)
 
 # delete all words user by unique key
 @app.route('/deleteWords/<string:unique_key>')
@@ -463,8 +464,6 @@ def clear_db():
         print(added_user.words)
         return str(added_user.words[-1].translated)
 #endregion
-
-
 
 if __name__ == "__main__":
     app.run()
