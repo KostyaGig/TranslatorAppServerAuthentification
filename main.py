@@ -334,11 +334,17 @@ class UserWord:
 # all users
 @app.route('/users')
 def users():
-    users = Employee.query.all()
-    users_name = list()
-    for user in users:
-        users_name.append(user.user_name)
-    return jsonify(users=users_name) # {"names":["Kostya","Egor"]}
+    try:
+        users = Employee.query.all()
+        users_name = list()
+        for user in users:
+            users_name.append(user.user_name)
+        return jsonify(users=users_name)  # {"names":["Kostya","Egor"]}
+    except Exception as e:
+        return jsonify({
+            "message": "Failed to receive users",
+            "mark": "Failure"
+        })
 
 # all words user
 
@@ -354,23 +360,43 @@ def users():
 
 @app.route('/users/<string:user_name>/words')
 def words_user(user_name):
-    user = Employee.query.filter_by(user_name=user_name).one()
-    words = user.words
-    user_words = []
-    for word in words:
-        user_word = UserWord(word.src,word.translated)
-        user_words.append(user_word.serialize())
+    try:
+        user = Employee.query.filter_by(user_name=user_name).one()
+        words = user.words
+        user_words = []
+        for word in words:
+            user_word = UserWord(word.src, word.translated)
+            user_words.append(user_word.serialize())
 
-    return jsonify(user_name=user_name,user_words=user_words)
+        return jsonify(user_name=user_name, user_words=user_words)
+    except Exception as e:
+        errorMessage = e.message
+        return jsonify({
+            "message": "Failed to receive words " + user_name,
+            "mark": "Failure"
+        })
+
 
 # delete all words user by unique key
 @app.route('/deleteWords/<string:unique_key>')
 def delete_user_words(unique_key):
-    user = Employee.query.filter_by(user_unique_key=unique_key).one()
-    user.words = []
-    db.session.add(user)
-    db.session.commit()
-    return "all words was deleted"
+    try:
+
+        user = Employee.query.filter_by(user_unique_key=unique_key).one()
+        user.words = []
+        db.session.add(user)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Words were deleted",
+            "mark": "Success"
+        })
+    except Exception as e:
+        errorMessage = e.message
+        return jsonify({
+            "message": errorMessage,
+            "mark": "Failure"
+        })
 
 # delete word by unique key
 @app.route('/deleteWord/<string:unique_key>')
@@ -399,9 +425,16 @@ def delete_user_word(unique_key):
 
         # if index removed is -100 then words sent from server not found in remote db
 
-        return "Deleted!"
+        return jsonify({
+            "message": translated_word + "is deleted",
+            "mark": "Success"
+        })
     except Exception as e:
-        return "Delete user word: " + str(e)
+        errorMessage = e.message
+        return jsonify({
+            "message": errorMessage,
+            "mark": "Failure"
+        })
 
 # for test Add test user
 @app.route('/addUserForTest')
