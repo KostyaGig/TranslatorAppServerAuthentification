@@ -1,6 +1,8 @@
 
 <h1>Translator App Server</h1>
 
+**Base url**: https://uehuf.pythonanywhere.com
+
 <h2>Features</h2>
 
 <h3>1. Authentication on server</h3>
@@ -34,17 +36,110 @@ User can use our app without auth in there.
     then all local words which sent before auth will be sent to server.
     <br><br>Server should receive this words and save to remote store
     
-2. Translate words when user already authorization in system
+
+3. Translate words when user already authorization in system
     <br><br>Translated word will save on server and save on local db
     <br>Synchronization not needs
 
+**Request**: baseUrl/syncWords/UniqueKey
+<br>**Param**: wordsJson
+<br>**Value**:
+```json
+{
+    "words" : [{
+        "src":"Ноутбук",
+        "translated":"Laptop"
+    }, {
+        "src":"Кнопка", 
+        "translated":"Button"
+    }]
+}
+```
+<br>**Response:**
+```json
+{
+    "mark": "Success",
+    "message": "Success sync words"
+}
+```
+
+
 <h3>3. Fetching user words by his name</h3>
+
+**Request**: baseUrl/users/UserName/words
+<br>**Response:**
+
+```json
+{
+    "user_name": "UserName",
+    "user_words": [
+        {
+            "src": "Ноутбук",
+            "translated": "Notebook"
+        },
+        {
+            "src": "Пентхаус",
+            "translated": "Penthouse"
+        }
+    ]
+}
+```
 
 <h3>4. Delete translated words</h3>
     Two away
 <br>1.Delete all translated words by user unique key
+
+**Request**: baseUrl/deleteWords/UniqueKey
+<br>**Response**:
+``` json
+{
+    "mark": "Success",
+    "message": "Words were deleted"
+}
+```
+
 <br>2.Delete certain translated word by user unique key
 
+**Request**: baseUrl/deleteWord/UniqueKey
+<br>**Param**: translatedWord, **value**: Home
+<br>**Response**:
+``` json
+{
+    "mark": "Success",
+    "message": "Home deleted"
+}
+```
+
 <h3>5. Fetch all users which is authorized in system</h3>
+
+**Request**: baseUrl/users
+<br>**Response:**
+```json
+{
+    "users": [
+        "FirstUser",
+        "SecondUser"
+    ]
+}
+```
+
 <h3>6. Fetch all translated word user by his name</h3>
 
+
+**Request**: baseUrl/users/UserName/words
+<br>**Response:**
+```json
+{
+    "user_name": "UserName",
+    "user_words": [
+        {
+            "src": "Дом",
+            "translated": "House"
+        },
+        {
+            "src": "Телефон",
+            "translated": "Phone"
+        }
+    ]
+}
+```

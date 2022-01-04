@@ -426,7 +426,7 @@ def delete_user_word(unique_key):
         # if index removed is -100 then words sent from server not found in remote db
 
         return jsonify({
-            "message": translated_word + "is deleted",
+            "message": translated_word + " is deleted",
             "mark": "Success"
         })
     except Exception as e:
