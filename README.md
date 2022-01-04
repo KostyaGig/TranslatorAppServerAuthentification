@@ -9,20 +9,19 @@
 
 <h4>Start with register user in system<h4/>
 
-For register user in system he should enter number phone and own name.
-<br/><br/>If such user by number phone not found in database then see user about  success register and return his generated unique id,which here will be persistence in shared preferences for fast auth in app. 
-
-Else we see user about which user with entered number already exist!
+For register user in system he must enter yours number phone and name.
+<br/><br/>If user with entered number phone not found in database then notify our user about  success register in system, also return him unique key,in order to sent his when we will make request on server 
+Otherwise we notify our user about failure auth in system and sent him error message
 
 <h4>Login user in system</h4>
 
-Two cases login user in system
+Two cases for login user in system
 
 1. Login by generated unique id
 
-    Our android app should store unique id in shared preferences. This is unique id user will be fetched from server (after success register). 
-    <br/><br/>When we launch our app we make request on server and put our unique id.<br/> If unique id will be find in database then we move our user on main screen app. <br/>If our unique id will be lost, we should use second way for login in system<br/><br/>
-2. Login by number phone and name user
+    Our android app must store unique id in local storage. This is unique id user gets from server after success register or login. 
+    <br/><br/>When we launch our app we make request on server for send our unique id.<br/> If unique id will be find in database then we navigate our user on main screen app. <br/>If our unique id will be lost, we may suggest user second way for login in system<br/><br/>
+2. Login by number phone user and his name 
     If our unique id will be lost (cache was cleared or our unique id will be lost the occurs ) we should use in this way for login in system.
     <br/>When we make request on server for login in system then should put name and phone number (already exist user).
     <br/>If our number and phone same with number and form which persist in remote database then return unique id user for further fast login in system 
