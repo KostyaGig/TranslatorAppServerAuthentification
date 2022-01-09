@@ -100,7 +100,7 @@ User can use our app without auth in there.
 <br>2.Delete certain translated word by user unique key
 
 **Request**: ```baseUrl/deleteWord/UniqueKey```
-<br>```**Param**```: translatedWord, ```**value**```: Home
+<br>**Param**: translatedWord, **value**: Home
 <br>**Response**:
 ``` json
 {
