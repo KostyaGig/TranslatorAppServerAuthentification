@@ -65,7 +65,7 @@ User can use our app without auth in there.
 
 <h3>3. Fetching user words by his name</h3>
 
-**Request**: baseUrl/users/UserName/words
+**Request**: ```baseUrl/users/UserName/words```
 <br>**Response:**
 
 ```json
@@ -88,7 +88,7 @@ User can use our app without auth in there.
     Two away
 <br>1.Delete all translated words by user unique key
 
-**Request**: baseUrl/deleteWords/UniqueKey
+**Request**: ```baseUrl/deleteWords/UniqueKey```
 <br>**Response**:
 ``` json
 {
@@ -99,7 +99,7 @@ User can use our app without auth in there.
 
 <br>2.Delete certain translated word by user unique key
 
-**Request**: baseUrl/deleteWord/UniqueKey
+**Request**: ```baseUrl/deleteWord/UniqueKey```
 <br>**Param**: translatedWord, **value**: Home
 <br>**Response**:
 ``` json
@@ -111,7 +111,7 @@ User can use our app without auth in there.
 
 <h3>5. Fetch all users which is authorized in system</h3>
 
-**Request**: baseUrl/users
+**Request**: ```baseUrl/users```
 <br>**Response:**
 ```json
 {
@@ -125,7 +125,7 @@ User can use our app without auth in there.
 <h3>6. Fetch all translated word user by his name</h3>
 
 
-**Request**: baseUrl/users/UserName/words
+**Request**: ```baseUrl/users/UserName/words```
 <br>**Response:**
 ```json
 {
