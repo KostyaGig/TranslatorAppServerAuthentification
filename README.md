@@ -40,7 +40,7 @@ User can use our app without auth in there.
     <br><br>Translated word will save on server and save on local db
     <br>Synchronization not needs
 
-**Request**: baseUrl/syncWords/UniqueKey
+**Request**: ```baseUrl/syncWords/UniqueKey```
 <br>**Param**: wordsJson
 <br>**Value**:
 ```json
