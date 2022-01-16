@@ -7,24 +7,24 @@
 
 <h3>1. Authentication on server</h3>
 
-<h4>Start with register user in system<h4/>
+<h4>Register user in system<h4/>
 
-For register user in system he must enter yours number phone and name.
-<br/><br/>If user with entered number phone not found in database then notify our user about  success register in system, also return him unique key,in order to sent his when we will make request on server 
-Otherwise we notify our user about failure auth in system and sent him error message
+For register user in system he should enter your number phone and name.
+<br/><br/>If user with wrote number phone will not found in server database then notify user about success register in system, also return him unique key to will send it for further communicate with server
+If wrote number phone exist in database then we notify user about failure register in system and navigate him to login screen
 
 <h4>Login user in system</h4>
 
-Two cases for login user in system
+We have a two cases login user to system
 
 1. Login by generated unique id
 
-    Our android app must store unique id in local storage. This is unique id user gets from server after success register or login. 
-    <br/><br/>When we launch our app we make request on server for send our unique id.<br/> If unique id will be find in database then we navigate our user on main screen app. <br/>If our unique id will be lost, we may suggest user second way for login in system<br/><br/>
-2. Login by number phone user and his name 
-    If our unique id will be lost (cache was cleared or our unique id will be lost the occurs ) we should use in this way for login in system.
-    <br/>When we make request on server for login in system then should put name and phone number (already exist user).
-    <br/>If our number and phone same with number and form which persist in remote database then return unique id user for further fast login in system 
+    [TranslatorApp](https://github.com/KostyaGig/TranslatorApp) is storing unique id in local storage. It unique id user got from server after success register or login. 
+    <br/><br/>When we launch app then do request on server and send unique id.<br/> If unique id will be find in the server database then we navigate  user to main screen app. <br/>If unique id is lost, we can use the second case<br/><br/>
+2. Login by number phone and user name
+    If unique id is lost (cached data on device is cleared) we can use in this way for login to system.
+    <br/>Doing this request we should to send name and user phone.
+    <br/>If user sent correctly data(was founded in the server database) then server will send unique id for further communication with server
     
 <h3>2. Synchronization local and remote words</h2>
 User can use our app without auth in there.
