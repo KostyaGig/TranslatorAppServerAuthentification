@@ -24,7 +24,7 @@ We have a two cases login user to system
 2. Login by number phone and user name
     If unique id is lost (cached data on device is cleared) we can use in this way for login to system.
     <br/>Doing this request we should to send name and user phone.
-    <br/>If user sent correctly data(was founded in the server database) then server will send unique id for further communication with server
+    <br/>If user sent correctly data(wrote name and number phone was founded in the server database) then server will send unique id for further communication with server
     
 <h3>2. Synchronization local and remote words</h2>
 User can use our app without auth in there.
