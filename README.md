@@ -23,21 +23,21 @@ We have a two cases login user to system
     <br/><br/>When we launch app then do request on server and send unique id.<br/> If unique id will be find in the server database then we navigate  user to main screen app. <br/>If unique id is lost, we can use the second case<br/><br/>
 2. Login by number phone and user name
     If unique id is lost (cached data on device is cleared) we can use in this way for login to system.
-    <br/>Doing this request we should to send name and user phone.
+    <br/>When we this request we will should to send name and phone
     <br/>If user sent correctly data(wrote name and number phone was founded in the server database) then server will send unique id for further communication with server
     
 <h3>2. Synchronization local and remote words</h2>
-User can use our app without auth in there.
-\n We have two situation
+User can use our app without auth there.
+\n We have two cases:
 1. Translate words in app without auth in system
-    Translated words will save to local store on phone
-    <br><br>If user want auth in system (success login or register) 
-    then all local words which sent before auth will be sent to server.
-    <br><br>Server should receive this words and save to remote store
+    Translated words will be save to local storage on user device
+    <br><br>If user will want auth in system(he register or login to account)
+    then all words on user device will be send to server.
+    <br><br>Server will receive sent words and will save them to remote storage
     
 
-3. Translate words when user already authorization in system
-    <br><br>Translated word will save on server and save on local db
+3. Translate words when user already auth in system
+    <br><br>Translated words will be save on server also will be cache on user device
     <br>Synchronization not needs
 
 **Request**: ```baseUrl/syncWords/UniqueKey```
