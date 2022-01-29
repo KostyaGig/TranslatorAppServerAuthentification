@@ -1,8 +1,6 @@
 
 <h1>Translator App Server</h1>
 
-**Base url**: https://uehuf.pythonanywhere.com
-
 <h2>Features</h2>
 
 <h3>1. Authentication on server</h3>
@@ -142,3 +140,7 @@ User can use our app without auth there.
     ]
 }
 ```
+
+<h2>API</h2>
+   
+**Base url**: https://uehuf.pythonanywhere.com
