@@ -31,13 +31,13 @@ User can use our app without auth there.
 \n We have two cases:
 1. Translate words in app without auth in system
     Translated words will be save to local storage on user device
-    <br><br>If user will want auth in system(he register or login to account)
-    then all words on user device will be send to server.
-    <br><br>Server will receive sent words and will save them to remote storage
+    <br><br>If user will want to auth in system(register or login to account)
+    then all words on user device will be send to server for synchronization.
+    <br><br>Server will need to receive them and save to remote storage
     
 
 3. Translate words when user already auth in system
-    <br><br>Translated words will be save on server also will be cache on user device
+    <br><br>Translated words will be save on server and will be cache on user device
     <br>Synchronization not needs
 
 **Request**: ```baseUrl/syncWords/UniqueKey```
