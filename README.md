@@ -7,11 +7,11 @@
 
 <h4>Register user in system<h4/>
 
-For register user in system he should enter your number phone and name.
-<br/><br/>If user with wrote number phone will not found in server database then notify user about success register in system, also return him unique key to will send it for further communicate with server
-If wrote number phone exist in database then we notify user about failure register in system and navigate him to login screen
+For the registration user in system he needs to enter his number phone and name.
+<br/><br/>If user with enterred data hasn't existed yet then notify user about a success registration  in the  system, also return him an unique key that will be used for future requests to the server
+If wroted number phone by user has already existed then we notify user about a failure registration in the  system and navigate him to the login screen
 
-<h4>Login user in system</h4>
+<h4>How to Login user in the system?</h4>
 
 We have a two cases login user to system
 
